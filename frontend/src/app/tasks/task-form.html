@@ -1,0 +1,113 @@
+<section class="page page-narrow">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">{{ isEdit ? 'Edit task' : 'New task' }}</p>
+      <h1 class="page-title">{{ isEdit ? 'Update task' : 'Create a task' }}</h1>
+      <p class="page-subtitle">
+        @if (isEdit) {
+          Change the details below and save to update the task.
+        } @else {
+          Give the task a clear title, an optional description and a starting status.
+        }
+      </p>
+    </div>
+    <a class="btn btn-ghost" routerLink="/tasks">Back to tasks</a>
+  </header>
+
+  @if (loading()) {
+    <div class="state" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Loading task…</p>
+    </div>
+  } @else {
+    @if (error(); as message) {
+      <div class="alert alert-error" role="alert">
+        <div>
+          <strong>Something went wrong</strong>
+          <p>{{ message }}</p>
+        </div>
+        @if (loadFailed()) {
+          <a class="btn btn-ghost btn-sm" routerLink="/tasks">Back to list</a>
+        }
+      </div>
+    }
+
+    @if (!loadFailed()) {
+      <form class="card form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="title">
+            Title
+            <span class="required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            maxlength="200"
+            autocomplete="off"
+            placeholder="e.g. Write the deployment guide"
+            [attr.aria-invalid]="showError('title')"
+            [attr.aria-describedby]="showError('title') ? 'title-error' : 'title-hint'"
+          />
+          @if (showError('title')) {
+            <p class="error-text" id="title-error">
+              @if (form.controls.title.hasError('required')) {
+                A title is required.
+              } @else if (form.controls.title.hasError('pattern')) {
+                The title cannot contain only spaces.
+              } @else {
+                The title must be at most 200 characters.
+              }
+            </p>
+          } @else {
+            <p class="hint" id="title-hint">Keep it short and actionable.</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            rows="5"
+            formControlName="description"
+            maxlength="1000"
+            placeholder="Add any context that will help later…"
+            [attr.aria-invalid]="showError('description')"
+            [attr.aria-describedby]="
+              showError('description') ? 'description-error' : 'description-hint'
+            "
+          ></textarea>
+          @if (showError('description')) {
+            <p class="error-text" id="description-error">
+              The description must be at most 1000 characters.
+            </p>
+          } @else {
+            <p class="hint" id="description-hint">Optional. Up to 1000 characters.</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" formControlName="status">
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ statusLabel(status) }}</option>
+            }
+          </select>
+          <p class="hint">New tasks default to “To do”.</p>
+        </div>
+
+        <div class="form-actions">
+          <a class="btn btn-ghost" routerLink="/tasks">Cancel</a>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="spinner spinner-sm" aria-hidden="true"></span>
+              Saving…
+            } @else {
+              {{ isEdit ? 'Save changes' : 'Create task' }}
+            }
+          </button>
+        </div>
+      </form>
+    }
+  }
+</section>

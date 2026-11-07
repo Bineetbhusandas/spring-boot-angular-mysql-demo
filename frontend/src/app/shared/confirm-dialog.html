@@ -1,0 +1,24 @@
+<dialog
+  #dialog
+  class="confirm-dialog"
+  (cancel)="onCancel($event)"
+  (click)="onBackdropClick($event)"
+>
+  <div class="dialog-content">
+    <span class="dialog-icon" aria-hidden="true">!</span>
+    <h2 class="dialog-title">{{ title() }}</h2>
+    <p class="dialog-message">{{ message() }}</p>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-ghost" (click)="cancel()" [disabled]="busy()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-danger" (click)="confirmed.emit()" [disabled]="busy()">
+      @if (busy()) {
+        <span class="spinner spinner-sm" aria-hidden="true"></span>
+      }
+      {{ confirmLabel() }}
+    </button>
+  </div>
+</dialog>

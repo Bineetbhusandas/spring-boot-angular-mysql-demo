@@ -1,0 +1,10 @@
+# Keep the Docker build context small and avoid leaking local secrets
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+.env
+*.md
+scripts/

@@ -1,0 +1,27 @@
+target/
+*.log
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+coverage/
+*.tsbuildinfo
+
+# Local secrets - never commit this
+.env
+
+# Local Java-upgrade / IDE tooling (not part of the app)
+.github/modernize/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db

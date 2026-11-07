@@ -1,0 +1,4 @@
+/* Shell layout is part of the global design system (src/styles.css). */
+:host {
+  display: block;
+}

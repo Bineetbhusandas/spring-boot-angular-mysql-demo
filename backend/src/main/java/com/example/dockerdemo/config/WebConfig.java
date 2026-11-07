@@ -1,0 +1,29 @@
+package com.example.dockerdemo.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * CORS is needed later when the Angular UI runs in its own container/origin
+ * and calls this API from the browser. The allowed origin is configurable so
+ * it can be changed without rebuilding the image (see CORS_ALLOWED_ORIGINS).
+ */
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    private final String[] allowedOrigins;
+
+    public WebConfig(@Value("${app.cors.allowed-origins}") String[] allowedOrigins) {
+        this.allowedOrigins = allowedOrigins;
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOrigins(allowedOrigins)
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("*");
+    }
+}

@@ -1,0 +1,18 @@
+@if (toastService.toasts().length > 0) {
+  <div class="toast-stack" aria-live="polite">
+    @for (toast of toastService.toasts(); track toast.id) {
+      <div [class]="'toast toast-' + toast.kind" role="status">
+        <span class="toast-icon" aria-hidden="true">{{ icon(toast.kind) }}</span>
+        <p class="toast-message">{{ toast.message }}</p>
+        <button
+          type="button"
+          class="toast-close"
+          (click)="toastService.dismiss(toast.id)"
+          aria-label="Dismiss notification"
+        >
+          ×
+        </button>
+      </div>
+    }
+  </div>
+}

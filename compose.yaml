@@ -1,0 +1,100 @@
+name: spring-boot-docker-demo
+
+services:
+  # ------------------------------------------------------------------
+  # MySQL database container
+  # Host port 3307 -> container port 3306 (so it never clashes with a
+  # MySQL installed directly on your machine).
+  # ------------------------------------------------------------------
+  mysql:
+    image: mysql:8.4
+    container_name: demo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - demo-net
+    healthcheck:
+      # The app container waits for this to pass before it starts.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ------------------------------------------------------------------
+  # Spring Boot application container
+  # Inside the Docker network it reaches MySQL at host "mysql" port 3306.
+  # ------------------------------------------------------------------
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: spring-boot-docker-demo:1.0.0
+    container_name: demo-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      SERVER_PORT: 8080
+    ports:
+      - "${APP_HOST_PORT:-8080}:8080"
+    networks:
+      - demo-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+  # ------------------------------------------------------------------
+  # Angular UI container
+  # nginx serves the built SPA on port 8080 inside the network and proxies
+  # /api/* to the Spring Boot container. The host port defaults to 4200.
+  # ------------------------------------------------------------------
+  ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: spring-boot-docker-demo-ui:1.0.0
+    container_name: demo-ui
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${UI_HOST_PORT:-4200}:8080"
+    networks:
+      - demo-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz | grep -q ok"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+networks:
+  # Explicit, named bridge network. Both containers join it, which is what
+  # lets the app resolve the hostname "mysql" to the database container.
+  demo-net:
+    name: demo-net
+    driver: bridge
+
+volumes:
+  # Named volume: the database survives `docker compose down` and restarts.
+  mysql-data:
+    name: spring-boot-docker-demo-mysql-data

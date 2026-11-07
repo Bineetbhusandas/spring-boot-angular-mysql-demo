@@ -1,0 +1,6 @@
+/* Form layout lives in the global design system (styles.css) so future forms
+   can reuse the same field, hint, error and action styles. Only the width of
+   this page is specific to the task form. */
+.form-card {
+  max-width: 46rem;
+}

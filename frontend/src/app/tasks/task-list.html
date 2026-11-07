@@ -1,0 +1,115 @@
+<section class="page" [attr.aria-busy]="loading()">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Taskboard</p>
+      <h1 class="page-title">Tasks</h1>
+      <p class="page-subtitle">
+        Track work across three simple states. Everything is stored in MySQL and served by Spring
+        Boot.
+      </p>
+    </div>
+    <a class="btn btn-primary" routerLink="/tasks/new">
+      <span aria-hidden="true">+</span>
+      New task
+    </a>
+  </header>
+
+  <div class="toolbar">
+    <div class="filter-chips" role="group" aria-label="Filter tasks by status">
+      @for (option of filterOptions; track option.value) {
+        <button
+          type="button"
+          class="chip"
+          [class.is-active]="filter() === option.value"
+          [attr.aria-pressed]="filter() === option.value"
+          (click)="setFilter(option.value)"
+        >
+          {{ option.label }}
+          <span class="chip-count">{{ counts()[option.value] }}</span>
+        </button>
+      }
+    </div>
+
+    <button type="button" class="btn btn-ghost btn-sm" (click)="load()" [disabled]="loading()">
+      Refresh
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="state" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Loading tasks…</p>
+    </div>
+  } @else if (error(); as message) {
+    <div class="alert alert-error" role="alert">
+      <div>
+        <strong>Could not load tasks</strong>
+        <p>{{ message }}</p>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="load()">Try again</button>
+    </div>
+  } @else if (filteredTasks().length === 0) {
+    <div class="state">
+      <div class="state-icon" aria-hidden="true">☑</div>
+      @if (tasks().length === 0) {
+        <h2>No tasks yet</h2>
+        <p>Create your first task and it will appear here right away.</p>
+        <a class="btn btn-primary" routerLink="/tasks/new">Create a task</a>
+      } @else {
+        <h2>Nothing in this view</h2>
+        <p>No tasks match the “{{ labelFor(filter()) }}” filter.</p>
+        <button type="button" class="btn btn-ghost" (click)="setFilter('ALL')">
+          Show all tasks
+        </button>
+      }
+    </div>
+  } @else {
+    <ul class="task-list">
+      @for (task of filteredTasks(); track task.id) {
+        <li class="task-card">
+          <div class="task-main">
+            <div class="task-heading">
+              <h2>{{ task.title }}</h2>
+              <span [class]="badgeClass(task.status)">{{ statusLabel(task.status) }}</span>
+            </div>
+
+            @if (task.description) {
+              <p class="task-description">{{ task.description }}</p>
+            }
+
+            <p class="task-meta">
+              <span>Created {{ task.createdAt | date: 'mediumDate' }}</span>
+              @if (task.updatedAt !== task.createdAt) {
+                <span>Updated {{ task.updatedAt | date: 'medium' }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="task-actions">
+            <a class="btn btn-ghost btn-sm" [routerLink]="['/tasks', task.id, 'edit']"> Edit </a>
+            <button
+              type="button"
+              class="btn btn-danger-ghost btn-sm"
+              (click)="askDelete(task)"
+              [disabled]="deleting()"
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <p class="result-count">Showing {{ filteredTasks().length }} of {{ tasks().length }} tasks</p>
+  }
+</section>
+
+<app-confirm-dialog
+  [open]="pendingDelete() !== null"
+  title="Delete task?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete task"
+  [busy]="deleting()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>
